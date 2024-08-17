@@ -180,4 +180,4 @@ echo
 
 echo -e "${YELLOW}모든작업이 완료되었습니다.컨트롤+A+D로 스크린을 종료해주세요${NC}"
 echo -e "${BOLD}${RED}다음 링크에서 지갑에 Faucet을 요청하세요:https://faucet.testnet-1.testnet.allora.network/${NC}"
-echo -e "${GREEN}스크립트 작성자: kangjk${NC}"
+echo -e "${GREEN}스크립트 작성자: https://t.me/kjkresearch${NC}"
