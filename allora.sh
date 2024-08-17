@@ -13,15 +13,17 @@ RESET="\033[0m"
 execute_with_prompt() {
     local message="$1"
     local command="$2"
-    echo -e "${DARK_YELLOW}${message}${RESET}"
-    echo "Executing: $command"
     
+    echo -e "${DARK_YELLOW}${message}${RESET}"
+
     # 명령어 실행 및 오류 내용 캡처
-    output=$(bash -c "$command" 2>&1)
+    output=$(eval "$command" 2>&1)
     exit_code=$?
 
     # 출력 결과를 화면에 표시
-    echo "$output"
+    if [ -n "$output" ]; then
+        echo "$output"
+    fi
 
     if [ $exit_code -ne 0 ]; then
         echo -e "${RED}Error: Command failed: $command${RESET}" >&2
@@ -45,8 +47,8 @@ execute_with_prompt "sudo apt update -y && sudo apt upgrade -y"
 
 echo -e "${BOLD}${DARK_YELLOW}필요한 패키지 설치 중...${RESET}"
 
-# 필수 패키지 설치 (ca-certificates, curl, gnupg, ufw, jq)
-execute_with_prompt "sudo apt install -y ca-certificates curl gnupg ufw jq"
+# 필수 패키지 설치 (ca-certificates, curl, gnupg, ufw, jq, git)
+execute_with_prompt "sudo apt install -y ca-certificates curl gnupg ufw jq git"
 
 echo -e "${BOLD}${DARK_YELLOW}Docker 설치 중...${RESET}"
 
@@ -179,3 +181,4 @@ echo
 echo -e "${YELLOW}모든 작업이 완료되었습니다. 컨트롤+A+D로 스크린을 종료해주세요${RESET}"
 echo -e "${BOLD}${RED}다음 링크에서 지갑에 Faucet을 요청하세요: https://faucet.testnet-1.testnet.allora.network/${RESET}"
 echo -e "${BOLD}${UNDERLINE}${CYAN}스크립트 작성자: https://t.me/kjkresearch${RESET}"
+
