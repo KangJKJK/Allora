@@ -107,7 +107,7 @@ sleep 2
 
 echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}Worker 노드 설치 중...${RESET}"
 # Worker 노드 설치
-execute_with_prompt 'git clone https://github.com/allora-network/basic-coin-prediction-node'
+execute_with_prompt "Allora-network 리포지토리 클론 중..." "git clone https://github.com/allora-network/basic-coin-prediction-node"
 
 # `cd` 명령어로 디렉토리 변경 후 작업 수행
 echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}디렉토리 변경 중...${RESET}"
