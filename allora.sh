@@ -39,6 +39,11 @@ execute_with_prompt() {
     fi
 }
 
+# 안내 메시지
+echo -e "${YELLOW}설치 도중 문제가 발생하면 다음 명령어를 입력하고 다시 시도하세요:${NC}"
+echo -e "${YELLOW}sudo rm -f /root/allora.sh${NC}"
+echo
+
 # 나머지 스크립트 (~/setup_allora_worker.sh에 저장될 내용)
 cat << 'EOF' > ~/setup_allora_worker.sh
 
