@@ -121,7 +121,7 @@ read -p "WALLET_SEED_PHRASE을 입력하세요: " WALLET_SEED_PHRASE
 echo
 echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}config.json 파일 생성 중...${RESET}"
 # config.json 파일 생성
-cat <<EOL > config.json
+cat <<EOF > config.json
 {
   "wallet": {
     "addressKeyName": "test",
@@ -155,7 +155,7 @@ cat <<EOL > config.json
     }
   ]
 }
-EOL
+EOF
 
 echo -e "${BOLD}${DARK_YELLOW}config.json 파일이 성공적으로 생성되었습니다!${RESET}"
 echo
