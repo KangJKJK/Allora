@@ -46,6 +46,7 @@ echo
 
 # 나머지 스크립트 (~/setup_allora_worker.sh에 저장될 내용)
 cat << 'EOF' > ~/setup_allora_worker.sh
+#!/bin/bash
 
 # 요구 사항을 충족하지 않으면 스크립트 종료
 if [[ ! "$response" =~ ^[Yy]$ ]]; then
@@ -103,7 +104,8 @@ fi
 execute_with_prompt 'sudo usermod -aG docker $USER'
 
 echo -e "${BOLD}${DARK_YELLOW}UFW 방화벽 설정 중...${RESET}"
-# 8. UFW 설치 및 포트 개방
+
+# UFW 설치 및 포트 개방
 execute_with_prompt "UFW 설치 중..." "sudo apt-get install -y ufw"
 read -p "UFW를 설치한 후 계속하려면 Enter를 누르세요..."
 execute_with_prompt "UFW 활성화 중..." "sudo ufw enable"
@@ -111,7 +113,7 @@ execute_with_prompt "필요한 포트 개방 중..." \
     "sudo ufw allow ssh && \
      sudo ufw allow 22 && \
      sudo ufw allow 4001 && \
-     sudo ufw allow 4000/tcp&& \
+     sudo ufw allow 4000/tcp && \
      sudo ufw allow 8001 && \
      sudo ufw allow 8001/tcp && \
      sudo ufw allow status"
@@ -121,8 +123,11 @@ echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}Worker 노드 설치 중...${RESET}"
 # Worker 노드 설치
 execute_with_prompt 'git clone https://github.com/allora-network/basic-coin-prediction-node'
 execute_with_prompt 'cd basic-coin-prediction-node'
+
 echo
+echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}WALLET_SEED_PHRASE 입력 받기...${RESET}"
 read -p "WALLET_SEED_PHRASE을 입력하세요: " WALLET_SEED_PHRASE
+
 echo
 echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}config.json 파일 생성 중...${RESET}"
 # config.json 파일 생성
