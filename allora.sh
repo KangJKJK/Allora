@@ -39,22 +39,6 @@ execute_with_prompt() {
     fi
 }
 
-# 안내 메시지
-echo -e "${YELLOW}설치 도중 문제가 발생하면 다음 명령어를 입력하고 다시 시도하세요:${NC}"
-echo -e "${YELLOW}sudo rm -f /root/allora.sh${NC}"
-echo
-
-# 나머지 스크립트 (~/setup_allora_worker.sh에 저장될 내용)
-cat << 'EOF' > ~/setup_allora_worker.sh
-#!/bin/bash
-
-# 요구 사항을 충족하지 않으면 스크립트 종료
-if [[ ! "$response" =~ ^[Yy]$ ]]; then
-    echo -e "${BOLD}${DARK_YELLOW}오류: 요구 사항을 충족하지 않습니다. 종료합니다...${RESET}"
-    echo
-    exit 1
-fi
-
 echo -e "${BOLD}${DARK_YELLOW}시스템 의존성 업데이트 중...${RESET}"
 execute_with_prompt "sudo apt update -y && sudo apt upgrade -y"
 
@@ -76,7 +60,6 @@ execute_with_prompt 'sudo apt update && sudo apt install -y docker-ce docker-ce-
 echo -e "${BOLD}${DARK_YELLOW}Docker 서비스 활성화 중...${RESET}"
 
 # Docker 서비스 활성화 및 시작
-echo -e "${BOLD}${DARK_YELLOW}Docker 서비스 활성화 및 시작 중...${RESET}"
 execute_with_prompt 'sudo systemctl enable docker'
 execute_with_prompt 'sudo systemctl start docker'
 
@@ -88,7 +71,6 @@ echo -e "${BOLD}${DARK_YELLOW}Docker Compose 설치 중...${RESET}"
 
 # Docker Compose의 최신 버전 정보를 가져와서 설치
 VER=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep tag_name | cut -d '"' -f 4)
-echo
 execute_with_prompt 'sudo curl -L "https://github.com/docker/compose/releases/download/'"$VER"'/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose'
 execute_with_prompt 'sudo chmod +x /usr/local/bin/docker-compose'
 
@@ -188,6 +170,6 @@ echo
 execute_with_prompt 'docker logs -f worker'
 echo
 
-echo -e "${YELLOW}모든작업이 완료되었습니다.컨트롤+A+D로 스크린을 종료해주세요${NC}"
-echo -e "${BOLD}${RED}다음 링크에서 지갑에 Faucet을 요청하세요:https://faucet.testnet-1.testnet.allora.network/${NC}"
-echo -e "${GREEN}스크립트 작성자: https://t.me/kjkresearch${NC}"
+echo -e "${YELLOW}모든 작업이 완료되었습니다. 컨트롤+A+D로 스크린을 종료해주세요${RESET}"
+echo -e "${BOLD}${UNDERLINE}${CYAN}다음 링크에서 지갑에 Faucet을 요청하세요: https://faucet.testnet-1.testnet.allora.network/${RESET}"
+echo -e "${BOLD}${UNDERLINE}${CYAN}스크립트 작성자: https://t.me/kjkresearch${RESET}"
