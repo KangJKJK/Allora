@@ -1,7 +1,6 @@
 #!/bin/bash
 
-set -x  # 디버깅 모드 활성화
-
+# 색상 설정
 BOLD="\033[1m"
 UNDERLINE="\033[4m"
 DARK_YELLOW="\033[0;33m"
@@ -18,7 +17,7 @@ execute_with_prompt() {
     echo "Executing: $command"
     
     # 명령어 실행 및 오류 내용 캡처
-    output=$(eval "$command" 2>&1)
+    output=$(bash -c "$command" 2>&1)
     exit_code=$?
 
     # 출력 결과를 화면에 표시
@@ -93,8 +92,6 @@ echo -e "${BOLD}${DARK_YELLOW}UFW 방화벽 설정 중...${RESET}"
 execute_with_prompt "UFW 설치 중..." "sudo apt-get install -y ufw"
 read -p "UFW를 설치한 후 계속하려면 Enter를 누르세요..."
 execute_with_prompt "UFW 활성화 중..." "sudo ufw enable"
-
-# 포트 개방
 execute_with_prompt "필요한 포트 개방 중..." \
     "sudo ufw allow ssh && \
      sudo ufw allow 22 && \
@@ -112,7 +109,7 @@ execute_with_prompt 'git clone https://github.com/allora-network/basic-coin-pred
 
 # `cd` 명령어로 디렉토리 변경 후 작업 수행
 echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}디렉토리 변경 중...${RESET}"
-execute_with_prompt 'cd basic-coin-prediction-node'
+cd basic-coin-prediction-node || { echo "디렉토리 변경 실패"; exit 1; }
 
 # WALLET_SEED_PHRASE 입력 받기
 echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}WALLET_SEED_PHRASE 입력 받기...${RESET}"
@@ -182,4 +179,3 @@ echo
 echo -e "${YELLOW}모든 작업이 완료되었습니다. 컨트롤+A+D로 스크린을 종료해주세요${RESET}"
 echo -e "${BOLD}${RED}다음 링크에서 지갑에 Faucet을 요청하세요: https://faucet.testnet-1.testnet.allora.network/${RESET}"
 echo -e "${BOLD}${UNDERLINE}${CYAN}스크립트 작성자: https://t.me/kjkresearch${RESET}"
-
