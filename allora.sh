@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -x  # 디버깅 모드 활성화
+
 BOLD="\033[1m"
 UNDERLINE="\033[4m"
 DARK_YELLOW="\033[0;33m"
@@ -91,6 +93,8 @@ echo -e "${BOLD}${DARK_YELLOW}UFW 방화벽 설정 중...${RESET}"
 execute_with_prompt "UFW 설치 중..." "sudo apt-get install -y ufw"
 read -p "UFW를 설치한 후 계속하려면 Enter를 누르세요..."
 execute_with_prompt "UFW 활성화 중..." "sudo ufw enable"
+
+# 포트 개방
 execute_with_prompt "필요한 포트 개방 중..." \
     "sudo ufw allow ssh && \
      sudo ufw allow 22 && \
@@ -99,20 +103,23 @@ execute_with_prompt "필요한 포트 개방 중..." \
      sudo ufw allow 8001 && \
      sudo ufw allow 8001/tcp && \
      sudo ufw allow status"
+
 sleep 2
 
 echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}Worker 노드 설치 중...${RESET}"
 # Worker 노드 설치
 execute_with_prompt 'git clone https://github.com/allora-network/basic-coin-prediction-node'
+
+# `cd` 명령어로 디렉토리 변경 후 작업 수행
+echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}디렉토리 변경 중...${RESET}"
 execute_with_prompt 'cd basic-coin-prediction-node'
 
-echo
+# WALLET_SEED_PHRASE 입력 받기
 echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}WALLET_SEED_PHRASE 입력 받기...${RESET}"
 read -p "WALLET_SEED_PHRASE을 입력하세요: " WALLET_SEED_PHRASE
 
-echo
-echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}config.json 파일 생성 중...${RESET}"
 # config.json 파일 생성
+echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}config.json 파일 생성 중...${RESET}"
 cat <<EOF > config.json
 {
   "wallet": {
@@ -151,6 +158,8 @@ EOF
 
 echo -e "${BOLD}${DARK_YELLOW}config.json 파일이 성공적으로 생성되었습니다!${RESET}"
 echo
+
+# 추가 디렉토리 및 권한 설정
 execute_with_prompt 'mkdir worker-data'
 execute_with_prompt 'chmod +x init.config'
 sleep 2
@@ -171,5 +180,6 @@ execute_with_prompt 'docker logs -f worker'
 echo
 
 echo -e "${YELLOW}모든 작업이 완료되었습니다. 컨트롤+A+D로 스크린을 종료해주세요${RESET}"
-echo -e "${BOLD}${UNDERLINE}${CYAN}다음 링크에서 지갑에 Faucet을 요청하세요: https://faucet.testnet-1.testnet.allora.network/${RESET}"
+echo -e "${BOLD}${RED}다음 링크에서 지갑에 Faucet을 요청하세요: https://faucet.testnet-1.testnet.allora.network/${RESET}"
 echo -e "${BOLD}${UNDERLINE}${CYAN}스크립트 작성자: https://t.me/kjkresearch${RESET}"
+
