@@ -66,7 +66,7 @@ echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}디렉토리 변경 중...${RESET}"
 cd basic-coin-prediction-node || { echo "디렉토리 변경 실패"; exit 1; }
 
 # WALLET_SEED_PHRASE 입력 받기
-echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}WALLET_SEED_PHRASE 입력 받기...${RESET}"
+echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}EVM 지갑의 복구문자를 입력해주세요.${RESET}"
 read -p "WALLET_SEED_PHRASE을 입력하세요: " WALLET_SEED_PHRASE
 
 # config.json 파일 생성
