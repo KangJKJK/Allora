@@ -140,9 +140,9 @@ EOF
 echo -e "${BOLD}${DARK_YELLOW}config.json 파일이 성공적으로 생성되었습니다!${RESET}"
 echo
 
-# docker-compose.yml 파일에서 포트 변경
-echo -e "${YELLOW}docker-compose.yml 의 포트를 $desired_port로 변경합나다.${NC}"
-sed -i "s/8000:8000/${desired_port}:${desired_port}/g" docker-compose.yml
+# docker-compose.yml 파일에서 포트 추가
+echo -e "${YELLOW}docker-compose.yml 의 포트를 ${desired_port}로 추가합니다.${NC}"
+sed -i "/ports:/a\ \ \ \ - \"${desired_port}:${desired_port}\"" docker-compose.yml
 
 # UFW에서 포트 개방
 echo -e "${YELLOW}UFW에서 포트 $desired_port를 개방합니다...${NC}"
