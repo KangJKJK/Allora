@@ -58,11 +58,11 @@ echo -e "${BOLD}${DARK_YELLOW}UFW 방화벽 설정 중...${RESET}"
 
 echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}Worker 노드 설치 중...${RESET}"
 # Worker 노드 설치
-git clone https://github.com/allora-network/basic-coin-prediction-node
+git clone https://github.com/allora-network/allora-chain.git
 
 # cd 명령어로 디렉토리 변경 후 작업 수행
 echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}디렉토리 변경 중...${RESET}"
-cd basic-coin-prediction-node || { echo "디렉토리 변경 실패"; exit 1; }
+cd allora-chain.git || { echo "디렉토리 변경 실패"; exit 1; }
 
 # WALLET_SEED_PHRASE 입력 받기
 echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}EVM 지갑의 복구문자를 입력해주세요.${RESET}"
@@ -167,6 +167,41 @@ docker ps
 echo
 docker logs -f worker
 echo
+
+export USERIP=$(curl -s ifconfig.me)
+curl -s http://USERIP:26657/status | jq .
+curl -s http://USERIP:26657/status | jq .result.sync_info.catching_up
+
+echo -e "${YELLOW}검증자 정보를 확인합니다.${RESET}"
+
+cat data/validator0.account_info
+read -p "검증자 정보를 확인하세요"
+read -p "검증자 지갑주소를 입력하세요:" VALIWALLET
+read -p "밸리데이터 노드 이름을 설정하세요:" NAME
+docker compose exec validator0 bash
+cat > stake-validator.json << EOF
+{
+    "pubkey": $(allorad --home=$APP_HOME comet show-validator),
+    "amount": "1000000uallo",
+    "moniker": "$NAME",
+    "commission-rate": "0.1",
+    "commission-max-rate": "0.2",
+    "commission-max-change-rate": "0.01",
+    "min-self-delegation": "1"
+}
+EOF
+
+echo -e "${YELLOW}스테이킹 명령을 실행합니다.${RESET}"
+allorad tx staking create-validator ./stake-validator.json \
+    --chain-id=allora-testnet-1 \
+    --home="$APP_HOME" \
+    --keyring-backend=test \
+    --from="$MONIKER"
+
+VAL_PUBKEY=$(allorad --home=$APP_HOME comet show-validator | jq -r .key)
+allorad --home=$APP_HOME q staking validators -o=json | \
+    jq '.validators[] | select(.consensus_pubkey.value=="'$VAL_PUBKEY'")'
+allorad --home=$APP_HOME status | jq -r '.validator_info.voting_power'
 
 echo -e "${YELLOW}모든 작업이 완료되었습니다. 컨트롤+A+D로 스크린을 종료해주세요${RESET}"
 echo -e "${BOLD}${RED}다음 링크에서 지갑에 Faucet을 요청하세요: https://faucet.testnet.allora.network/${RESET}"
