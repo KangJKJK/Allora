@@ -23,12 +23,9 @@ source ~/.bashrc
 
 # Docker 설치
 echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}Docker 설치 중...${RESET}"
-sudo apt update
-sudo apt install -y docker.io
-sudo systemctl start docker
-sudo systemctl enable docker
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
 sudo usermod -aG docker $USER
-
 # Docker Compose 설치
 echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}Docker Compose 설치 중...${RESET}"
 sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
