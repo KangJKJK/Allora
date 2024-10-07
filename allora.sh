@@ -142,13 +142,15 @@ echo -e "2. 노드 동기화 상태 확인: ${GREEN}curl -so- http://localhost:2
 echo -e "   - 출력이 'false'가 될 때까지 기다리세요. 이는 노드가 완전히 동기화되었음을 의미합니다."
 echo -e "${BOLD}${CYAN}노드가 실행 중일 때 위 명령어를 사용하여 제든지 상태를 확인할 수 있습니다.${RESET}"
 
-# 자금 계좌 생성 및 faucet 사용
-echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}5. 자금 계좌 생성 및 faucet 사용${RESET}"
+# 자금 계좌 정보 확인 및 faucet 사용 안내
+echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}5. 자금 계좌 정보 확인 및 faucet 사용${RESET}"
 docker compose exec -T validator0 bash -c "
-    allorad --home=\$APP_HOME keys add funding_account --keyring-backend=test
-    FUNDING_ADDRESS=\$(allorad --home=\$APP_HOME keys show funding_account -a --keyring-backend=test)
-    echo \"자금 계좌 주소: \$FUNDING_ADDRESS\"
+    echo \"validator0 계정 정보:\"
+    allorad --home=\$APP_HOME keys show validator0 --keyring-backend=test
+    VALIDATOR_ADDRESS=\$(allorad --home=\$APP_HOME keys show validator0 -a --keyring-backend=test)
+    echo \"자금 계좌 주소: \$VALIDATOR_ADDRESS\"
     echo \"https://faucet.testnet.allora.network/에서 faucet을 사용하여 자금을 받으세요.\"
+    read -p "Faucet에서 자금을 받으셨나요? (y/n): "
 "
 
 # 검증자 설정 및 스테이킹
@@ -158,11 +160,14 @@ docker compose exec -T validator0 bash -c "
 echo '검증자 지갑 주소에 스테이킹을 하세요:'
 allorad --home=\$APP_HOME keys show validator0 -a --keyring-backend=test
 
+# 사용자에게 moniker 입력 받기
+read -p "노드이름을 설정하세요.: " MONIKER
+
 cat > stake-validator.json << EOF
 {
     \"pubkey\": \$(allorad --home=\$APP_HOME comet show-validator),
     \"amount\": \"1000000uallo\",
-    \"moniker\": \"validator0\",
+    \"moniker\": \"$MONIKER\",
     \"commission-rate\": \"0.1\",
     \"commission-max-rate\": \"0.2\",
     \"commission-max-change-rate\": \"0.01\",
@@ -177,7 +182,7 @@ allorad tx staking create-validator ./stake-validator.json \
     --home=\"\$APP_HOME\" \
     --keyring-backend=test \
     --from=validator0
-    
+
 # 검증자 설정 확인
 echo '검증자 설정 확인 중...'
 VAL_PUBKEY=\$(allorad --home=\$APP_HOME comet show-validator | jq -r .key)
@@ -206,8 +211,6 @@ echo "스트레스 테스트를 실행하려면 다음 명령을 사용하세요
 echo "bash test/local_testnet_l1.sh"
 echo "STRESS_TEST=true RPC_MODE=\"RandomBasedOnDeterministicSeed\" RPC_URLS=\"http://localhost:26657,http://localhost:26658,http://localhost:26659\" SEED=1 MAX_REPUTERS_PER_TOPIC=2 REPUTERS_PER_ITERATION=2 EPOCH_LENGTH=12 FINAL_REPORT=TRUE MAX_WORKERS_PER_TOPIC=2 WORKERS_PER_ITERATION=1 TOPICS_MAX=2 TOPICS_PER_ITERATION=1 MAX_ITERATIONS=2 go test -v -timeout 0 -test.run TestStressTestSuite ./test/stress"
 
-
-
 echo -e "${GREEN}Faucet 주소: https://faucet.testnet.allora.network/${NC}"
 echo -e "${YELLOW}모든 작업이 완료되었습니다. 컨트롤+A+D로 스크린을 종료해주세요.${NC}"
-echo -e "${GREEN}스크립트 작성자: https://t.me/kjkresearch${NC}"
+echo -e "${GREEN}스크립트 작성: https://t.me/kjkresearch${NC}"
