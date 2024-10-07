@@ -20,6 +20,7 @@ wget https://go.dev/dl/go1.20.5.linux-amd64.tar.gz
 sudo tar -C /usr/local -xzf go1.20.5.linux-amd64.tar.gz
 echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
 source ~/.bashrc
+export PATH=$PATH:/usr/local/go/bin
 
 # 도커 설치 확인
 echo -e "${BOLD}${CYAN}Docker 설치 확인 중...${NC}"
@@ -45,10 +46,11 @@ curl -sSL https://raw.githubusercontent.com/allora-network/allora-chain/main/ins
 # PATH에 ~/.local/bin 추가
 echo 'export PATH=$PATH:~/.local/bin' >> ~/.bashrc
 source ~/.bashrc
+export PATH=$PATH:~/.local/bin
 
 # Allorad 버전 확인
 echo -e "${BOLD}${DARK_YELLOW}Allorad 버전 확인 중...${RESET}"
-~/.local/bin/allorad version
+allorad version
 
 # Allora-chain 클론 및 설치
 echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}2. Allora-chain 클론 및 설치 중...${RESET}"
@@ -64,16 +66,18 @@ make install
 # PATH에 GOPATH/bin 추가
 echo 'export PATH=$PATH:$(go env GOPATH)/bin' >> ~/.bashrc
 source ~/.bashrc
+export PATH=$PATH:$(go env GOPATH)/bin
 
 # 로컬 네트워크 초기화 및 시작
 echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}3. 로컬 네트워크 초기화 및 시작 중...${RESET}"
 make init
-~/.local/bin/allorad start
+allorad start
 
 # Docker 컨테이너 빌드 및 시작
 echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}4. Docker 컨테이너 빌드 및 시작 중...${RESET}"
 docker compose pull
 docker compose up -d
+sleep 10  # 컨테이너가 완전히 시작될 때까지 대기
 
 # 노드 상태 확인
 echo -e "${BOLD}${DARK_YELLOW}5. 노드 상태 확인 중...${RESET}"
@@ -89,11 +93,11 @@ echo -e "${BOLD}${CYAN}노드가 실행 중일 때 위 명령어를 사용하여
 
 # 검증자 설정 및 스테이킹
 echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}6. 검증자 설정 및 스테이킹 중...${RESET}"
-docker compose exec validator0 bash -c "
+docker compose exec -T validator0 bash -c "
 # 스테이크 정보 파일 생성
 cat > stake-validator.json << EOF
 {
-    \"pubkey\": \$(~/.local/bin/allorad --home=\$APP_HOME comet show-validator),
+    \"pubkey\": \$(allorad --home=\$APP_HOME comet show-validator),
     \"amount\": \"1000000uallo\",
     \"moniker\": \"validator0\",
     \"commission-rate\": \"0.1\",
@@ -105,7 +109,7 @@ EOF
 
 # 검증자 스테이킹
 echo '검증자 스테이킹 중...'
-~/.local/bin/allorad tx staking create-validator ./stake-validator.json \
+allorad tx staking create-validator ./stake-validator.json \
     --chain-id=testnet \
     --home=\"\$APP_HOME\" \
     --keyring-backend=test \
@@ -113,13 +117,13 @@ echo '검증자 스테이킹 중...'
 
 # 검증자 설정 확인
 echo '검증자 설정 확인 중...'
-VAL_PUBKEY=\$(~/.local/bin/allorad --home=\$APP_HOME comet show-validator | jq -r .key)
-~/.local/bin/allorad --home=\$APP_HOME q staking validators -o=json | \
+VAL_PUBKEY=\$(allorad --home=\$APP_HOME comet show-validator | jq -r .key)
+allorad --home=\$APP_HOME q staking validators -o=json | \
     jq '.validators[] | select(.consensus_pubkey.value==\"'\$VAL_PUBKEY'\")'
 
 # 검증자 투표력 확인
 echo '검증자 투표력 확인 중...'
-~/.local/bin/allorad --home=\$APP_HOME status | jq -r '.validator_info.voting_power'
+allorad --home=\$APP_HOME status | jq -r '.validator_info.voting_power'
 "
 
 echo -e "${GREEN}Faucet 주소: https://faucet.testnet.allora.network/${NC}"
