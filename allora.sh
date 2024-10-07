@@ -148,6 +148,10 @@ echo -e "${BOLD}${CYAN}노드가 실행 중일 때 위 명령어를 사용하여
 # 검증자 설정 및 스테이킹
 echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}6. 검증자 설정 및 스테이킹 중...${RESET}"
 docker compose exec -T validator0 bash -c "
+# 검증자 지갑 주소 출력
+echo '검증자 지갑 주소에 스테이킹을 하세요:'
+allorad --home=\$APP_HOME keys show validator0 -a --keyring-backend=test
+
 cat > stake-validator.json << EOF
 {
     \"pubkey\": \$(allorad --home=\$APP_HOME comet show-validator),
