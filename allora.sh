@@ -150,8 +150,10 @@ docker compose exec -T validator0 bash -c "
     VALIDATOR_ADDRESS=\$(allorad --home=\$APP_HOME keys show validator0 -a --keyring-backend=test)
     echo \"자금 계좌 주소: \$VALIDATOR_ADDRESS\"
     echo \"https://faucet.testnet.allora.network/에서 faucet을 사용하여 자금을 받으세요.\"
-    read -p "Faucet에서 자금을 받으셨나요? (y/n): "
 "
+
+# 사용자에게 faucet 사용 여부 확인
+read -p "Faucet을 받고 엔터를 눌러주세요: "
 
 # 검증자 설정 및 스테이킹
 echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}6. 검증자 설정 및 스테이킹 중...${RESET}"
