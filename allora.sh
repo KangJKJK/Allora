@@ -167,19 +167,62 @@ read -p "Faucet을 받고 엔터를 눌러주세요: "
 
 # 검증자 설정 및 스테이킹
 echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}6. 검증자 설정 및 스테이킹 중...${RESET}"
-docker compose exec -T validator0 bash -c "
-# 검증자 지갑 주소 출력
-echo '검증자 지갑 주소에 스테이킹을 하세요:'
-allorad --home=\$APP_HOME keys show validator0 -a --keyring-backend=test
 
-# 사용자에게 moniker 입력 받기
-read -p "노드이름을 설정하세요.: " MONIKER
+if pgrep -x "allorad" > /dev/null
+then
+    echo "로컬에서 실행 중인 Allorad 노드를 사용합니다."
+    
+    # 검증자 지갑 주소 출력
+    echo '검증자 지갑 주소에 스테이킹을 하세요:'
+    allorad keys show validator0 -a --keyring-backend=test
 
-cat > stake-validator.json << EOF
+    # 사용자에게 moniker 입력 받기
+    read -p "노드이름을 설정하세요.: " MONIKER
+
+    cat > stake-validator.json << EOF
+{
+    "pubkey": $(allorad comet show-validator),
+    "amount": "1000000uallo",
+    "moniker": "$MONIKER",
+    "commission-rate": "0.1",
+    "commission-max-rate": "0.2",
+    "commission-max-change-rate": "0.01",
+    "min-self-delegation": "1"
+}
+EOF
+
+    # 검증자 스테이킹
+    echo '검증자 스테이킹 중...'
+    allorad tx staking create-validator ./stake-validator.json \
+        --chain-id=allora-testnet-1 \
+        --keyring-backend=test \
+        --from=validator0
+
+    # 검증자 설정 확인
+    echo '검증자 설정 확인 중...'
+    VAL_PUBKEY=$(allorad comet show-validator | jq -r .key)
+    allorad q staking validators -o=json | \
+        jq '.validators[] | select(.consensus_pubkey.value=="'$VAL_PUBKEY'")'
+
+    # 검증자 투표력 확인
+    echo '검증자 투표력 확인 중...'
+    allorad status | jq -r '.validator_info.voting_power'
+
+else
+    echo "Docker 컨테이너에서 검증자 설정을 진행합니다."
+    docker compose exec -T validator0 bash -c "
+    # 검증자 지갑 주소 출력
+    echo '검증자 지갑 주소에 스테이킹을 하세요:'
+    allorad --home=\$APP_HOME keys show validator0 -a --keyring-backend=test
+
+    # 사용자에게 moniker 입력 받기
+    read -p \"노드이름을 설정하세요.: \" MONIKER
+
+    cat > stake-validator.json << EOF
 {
     \"pubkey\": \$(allorad --home=\$APP_HOME comet show-validator),
     \"amount\": \"1000000uallo\",
-    \"moniker\": \"$MONIKER\",
+    \"moniker\": \"\$MONIKER\",
     \"commission-rate\": \"0.1\",
     \"commission-max-rate\": \"0.2\",
     \"commission-max-change-rate\": \"0.01\",
@@ -187,24 +230,26 @@ cat > stake-validator.json << EOF
 }
 EOF
 
-# 검증자 스테이킹
-echo '검증자 스테이킹 중...'
-allorad tx staking create-validator ./stake-validator.json \
-    --chain-id=allora-testnet-1 \
-    --home=\"\$APP_HOME\" \
-    --keyring-backend=test \
-    --from=validator0
+    # 검증자 스테이킹
+    echo '검증자 스테이킹 중...'
+    allorad tx staking create-validator ./stake-validator.json \
+        --chain-id=allora-testnet-1 \
+        --home=\"\$APP_HOME\" \
+        --keyring-backend=test \
+        --from=validator0
 
-# 검증자 설정 확인
-echo '검증자 설정 확인 중...'
-VAL_PUBKEY=\$(allorad --home=\$APP_HOME comet show-validator | jq -r .key)
-allorad --home=\$APP_HOME q staking validators -o=json | \
-    jq '.validators[] | select(.consensus_pubkey.value==\"'\$VAL_PUBKEY'\")'
+    # 검증자 설정 확인
+    echo '검증자 설정 확인 중...'
+    VAL_PUBKEY=\$(allorad --home=\$APP_HOME comet show-validator | jq -r .key)
+    allorad --home=\$APP_HOME q staking validators -o=json | \
+        jq '.validators[] | select(.consensus_pubkey.value==\"'\$VAL_PUBKEY'\")'
 
-# 검증자 투표력 확인
-echo '검증자 투표력 확인 중...'
-allorad --home=\$APP_HOME status | jq -r '.validator_info.voting_power'
-"
+    # 검증자 투표력 확인
+    echo '검증자 투표력 확인 중...'
+    allorad --home=\$APP_HOME status | jq -r '.validator_info.voting_power'
+    "
+fi
+
 # 통합 테스트 실행
 echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}7. 통합 테스트 실행${RESET}"
 echo "통합 테스트를 실행하려면 다음 명령을 사용하세요:"
