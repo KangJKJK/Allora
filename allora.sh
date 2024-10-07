@@ -182,4 +182,4 @@ allorad --home=\$APP_HOME status | jq -r '.validator_info.voting_power'
 
 echo -e "${GREEN}Faucet 주소: https://faucet.testnet.allora.network/${NC}"
 echo -e "${YELLOW}모든 작업이 완료되었습니다. 컨트롤+A+D로 스크린을 종료해주세요.${NC}"
-echo -e "${GREEN}스크립트 작성: https://t.me/kjkresearch${NC}"
+echo -e "${GREEN}스크립트 작성자: https://t.me/kjkresearch${NC}"
