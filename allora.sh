@@ -142,6 +142,15 @@ echo -e "2. 노드 동기화 상태 확인: ${GREEN}curl -so- http://localhost:2
 echo -e "   - 출력이 'false'가 될 때까지 기다리세요. 이는 노드가 완전히 동기화되었음을 의미합니다."
 echo -e "${BOLD}${CYAN}노드가 실행 중일 때 위 명령어를 사용하여 제든지 상태를 확인할 수 있습니다.${RESET}"
 
+# 자금 계좌 생성 및 faucet 사용
+echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}5. 자금 계좌 생성 및 faucet 사용${RESET}"
+docker compose exec -T validator0 bash -c "
+    allorad --home=\$APP_HOME keys add funding_account --keyring-backend=test
+    FUNDING_ADDRESS=\$(allorad --home=\$APP_HOME keys show funding_account -a --keyring-backend=test)
+    echo \"자금 계좌 주소: \$FUNDING_ADDRESS\"
+    echo \"https://faucet.testnet.allora.network/에서 faucet을 사용하여 자금을 받으세요.\"
+"
+
 # 검증자 설정 및 스테이킹
 echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}6. 검증자 설정 및 스테이킹 중...${RESET}"
 docker compose exec -T validator0 bash -c "
@@ -168,7 +177,7 @@ allorad tx staking create-validator ./stake-validator.json \
     --home=\"\$APP_HOME\" \
     --keyring-backend=test \
     --from=validator0
-
+    
 # 검증자 설정 확인
 echo '검증자 설정 확인 중...'
 VAL_PUBKEY=\$(allorad --home=\$APP_HOME comet show-validator | jq -r .key)
@@ -179,6 +188,25 @@ allorad --home=\$APP_HOME q staking validators -o=json | \
 echo '검증자 투표력 확인 중...'
 allorad --home=\$APP_HOME status | jq -r '.validator_info.voting_power'
 "
+# 통합 테스트 실행
+echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}7. 통합 테스트 실행${RESET}"
+echo "통합 테스트를 실행하려면 다음 명령을 사용하세요:"
+echo "bash test/local_testnet_l1.sh"
+echo "INTEGRATION=TRUE go test -timeout 10m ./test/integration/ -v"
+
+# 업그레이드 테스트 실행
+echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}8. 업그레이드 테스트 실행${RESET}"
+echo "업그레이드 테스트를 실행하려면 다음 명령을 사용하세요:"
+echo "bash test/local_testnet_upgrade_l1.sh"
+echo "UPGRADE=TRUE go test -timeout 10m ./test/integration/ -v"
+
+# 스트레스 테스트 실행
+echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}9. 스트레스 테스트 실행${RESET}"
+echo "스트레스 테스트를 실행하려면 다음 명령을 사용하세요:"
+echo "bash test/local_testnet_l1.sh"
+echo "STRESS_TEST=true RPC_MODE=\"RandomBasedOnDeterministicSeed\" RPC_URLS=\"http://localhost:26657,http://localhost:26658,http://localhost:26659\" SEED=1 MAX_REPUTERS_PER_TOPIC=2 REPUTERS_PER_ITERATION=2 EPOCH_LENGTH=12 FINAL_REPORT=TRUE MAX_WORKERS_PER_TOPIC=2 WORKERS_PER_ITERATION=1 TOPICS_MAX=2 TOPICS_PER_ITERATION=1 MAX_ITERATIONS=2 go test -v -timeout 0 -test.run TestStressTestSuite ./test/stress"
+
+
 
 echo -e "${GREEN}Faucet 주소: https://faucet.testnet.allora.network/${NC}"
 echo -e "${YELLOW}모든 작업이 완료되었습니다. 컨트롤+A+D로 스크린을 종료해주세요.${NC}"
