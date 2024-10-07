@@ -144,22 +144,13 @@ echo -e "${BOLD}${CYAN}노드가 실행 중일 때 위 명령어를 사용하여
 
 # 자금 계좌 정보 확인 및 faucet 사용 안내
 echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}5. 자금 계좌 정보 확인 및 faucet 사용${RESET}"
-if pgrep -x "allorad" > /dev/null
-then
-    echo "로컬에서 실행 중인 Allorad 노드를 사용합니다."
-    echo "validator0 계정 정보:"
-    allorad keys show validator0 --keyring-backend=test
-    VALIDATOR_ADDRESS=$(allorad keys show validator0 -a --keyring-backend=test)
-    echo "자금 계좌 주소: $VALIDATOR_ADDRESS"
-else
-    echo "Docker 컨테이너에서 validator0 정보를 가져옵니다."
-    docker compose exec -T validator0 bash -c "
-        echo \"validator0 계정 정보:\"
-        allorad --home=\$APP_HOME keys show validator0 --keyring-backend=test
-        VALIDATOR_ADDRESS=\$(allorad --home=\$APP_HOME keys show validator0 -a --keyring-backend=test)
-        echo \"자금 계좌 주소: \$VALIDATOR_ADDRESS\"
-    "
-fi
+echo "Docker 컨테이너에서 validator0 정보를 가져옵니다."
+docker compose exec validator0 cat /path/to/data/validator0.account_info "
+    echo \"validator0 계정 정보:\"
+    allorad --home=\$APP_HOME keys show validator0 --keyring-backend=test
+    VALIDATOR_ADDRESS=\$(allorad --home=\$APP_HOME keys show validator0 -a --keyring-backend=test)
+    echo \"자금 계좌 주소: \$VALIDATOR_ADDRESS\"
+"
 echo "https://faucet.testnet.allora.network/에서 faucet을 사용하여 자금을 받으세요."
 
 # 사용자에게 faucet 사용 여부 확인
