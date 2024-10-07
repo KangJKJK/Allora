@@ -164,7 +164,7 @@ EOF
 # 검증자 스테이킹
 echo '검증자 스테이킹 중...'
 allorad tx staking create-validator ./stake-validator.json \
-    --chain-id=testnet \
+    --chain-id=allora-testnet-1 \
     --home=\"\$APP_HOME\" \
     --keyring-backend=test \
     --from=validator0
