@@ -90,17 +90,18 @@ if [ -d "allora-chain" ]; then
     echo -e "${YELLOW}allora-chain 디렉토리가 이미 존재합니다. 업데이트를 진행합니다...${RESET}"
     cd allora-chain
     git fetch --all
+    git checkout main
     git reset --hard origin/main
-    git pull
+    git pull origin main
     echo -e "${GREEN}allora-chain 업데이트가 완료되었습니다.${RESET}"
 else
     echo -e "${YELLOW}allora-chain 디렉토리가 존재하지 않습니다. 새로 설치를 진행합니다...${RESET}"
-    git clone -b $(curl -s https://api.github.com/repos/allora-network/allora-chain/releases/latest | grep tag_name | cut -d '"' -f 4) https://github.com/allora-network/allora-chain.git
+    git clone https://github.com/allora-network/allora-chain.git
     cd allora-chain
-    go mod tidy
-    echo -e "${GREEN}allora-chain 설치가 완료되었습니다.${RESET}"
+    git checkout $(curl -s https://api.github.com/repos/allora-network/allora-chain/releases/latest | grep tag_name | cut -d '"' -f 4)
 fi
 echo -e "${CYAN}allora-chain 빌드를 시작합니다...${RESET}"
+go mod tidy
 make install
 echo -e "${GREEN}allora-chain 빌드가 완료되었습니다.${RESET}"
 
