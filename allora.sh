@@ -21,11 +21,18 @@ sudo tar -C /usr/local -xzf go1.20.5.linux-amd64.tar.gz
 echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
 source ~/.bashrc
 
-# Docker 설치
-echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}Docker 설치 중...${RESET}"
-curl -fsSL https://get.docker.com -o get-docker.sh
-sudo sh get-docker.sh
-sudo usermod -aG docker $USER
+# 도커 설치 확인
+echo -e "${BOLD}${CYAN}Docker 설치 확인 중...${NC}"
+if command -v docker >/dev/null 2>&1; then
+    echo -e "${GREEN}Docker가 이미 설치되어 있습니다.${NC}"
+else
+    echo -e "${RED}Docker가 설치되어 있지 않습니다. Docker를 설치하는 중입니다...${NC}"
+    sudo apt update && sudo apt install -y curl net-tools
+    curl -fsSL https://get.docker.com -o get-docker.sh
+    sudo sh get-docker.sh
+    echo -e "${GREEN}Docker가 성공적으로 설치되었습니다.${NC}"
+fi
+
 # Docker Compose 설치
 echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}Docker Compose 설치 중...${RESET}"
 sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
