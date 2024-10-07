@@ -9,200 +9,110 @@ GREEN="\033[0;32m"
 RED="\033[0;31m"
 RESET="\033[0m"
 
-echo -e "${BOLD}${DARK_YELLOW}시스템 의존성 업데이트 중...${RESET}"
-sudo apt update -y && sudo apt upgrade -y
+# 시스템 업데이트 및 필수 패키지 설치
+echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}0. 시스템 업데이트 및 필수 패키지 설치 중...${RESET}"
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y curl git jq make gcc build-essential
 
-echo -e "${BOLD}${DARK_YELLOW}필요한 패키지 설치 중...${RESET}"
-sudo apt install ca-certificates zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev curl git wget make
-sudo apt install curl git jq build-essential gcc unzip wget lz4 -y
-
-echo -e "${BOLD}${DARK_YELLOW}Docker 설치 중...${RESET}"
-
-# Docker GPG 키 및 저장소 설정
-sudo install -m 0755 -d /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+# Go 설치
+echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}Go 설치 중...${RESET}"
+wget https://go.dev/dl/go1.20.5.linux-amd64.tar.gz
+sudo tar -C /usr/local -xzf go1.20.5.linux-amd64.tar.gz
+echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
+source ~/.bashrc
 
 # Docker 설치
-sudo apt update && sudo apt install -y docker-ce docker-ce-cli containerd.io
-
-echo -e "${BOLD}${DARK_YELLOW}Docker 서비스 활성화 중...${RESET}"
-
-# Docker 서비스 활성화 및 시작
-sudo systemctl enable docker
-sudo systemctl start docker
-
-sleep 2
-echo -e "${BOLD}${DARK_YELLOW}Docker 버전 확인 중...${RESET}"
-docker version
-
-echo -e "${BOLD}${DARK_YELLOW}Docker Compose 설치 중...${RESET}"
-
-# Docker Compose의 최신 버전 정보를 가져와서 설치
-VER=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep tag_name | cut -d '"' -f 4)
-sudo curl -L "https://github.com/docker/compose/releases/download/$VER/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-sudo chmod +x /usr/local/bin/docker-compose
-
-echo -e "${BOLD}${DARK_YELLOW}Docker Compose 버전 확인 중...${RESET}"
-docker-compose --version
-
-# Docker 그룹이 없으면 생성하고 현재 사용자를 그룹에 추가
-if ! grep -q '^docker:' /etc/group; then
-    sudo groupadd docker
-    echo
-fi
-
+echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}Docker 설치 중...${RESET}"
+sudo apt install -y apt-transport-https ca-certificates curl software-properties-common
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+sudo apt update
+sudo apt install -y docker-ce
 sudo usermod -aG docker $USER
 
-echo -e "${BOLD}${DARK_YELLOW}UFW 방화벽 설정 중...${RESET}"
+# Docker Compose 설치
+echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}Docker Compose 설치 중...${RESET}"
+sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
 
-echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}Worker 노드 설치 중...${RESET}"
-# Worker 노드 설치
-git clone https://github.com/allora-network/allora-chain.git
+# Allorad 설치
+echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}1. Allorad 설치 중...${RESET}"
+curl -sSL https://raw.githubusercontent.com/allora-network/allora-chain/main/install.sh | bash -s -- v0.0.8
 
-# cd 명령어로 디렉토리 변경 후 작업 수행
-echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}디렉토리 변경 중...${RESET}"
-cd allora-chain.git || { echo "디렉토리 변경 실패"; exit 1; }
+# PATH에 ~/.local/bin 추가
+echo 'export PATH=$PATH:~/.local/bin' >> ~/.bashrc
+source ~/.bashrc
 
-# WALLET_SEED_PHRASE 입력 받기
-echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}EVM 지갑의 복구문자를 입력해주세요.${RESET}"
-read -p "WALLET_SEED_PHRASE을 입력하세요: " WALLET_SEED_PHRASE
+# Allorad 버전 확인
+echo -e "${BOLD}${DARK_YELLOW}Allorad 버전 확인 중...${RESET}"
+allorad version
 
-# 포트가 사용 중인지 확인하는 함수
-check_port() {
-    if lsof -i :$1 > /dev/null; then
-        return 1  # 포트 사용 중
-    else
-        return 0  # 포트 사용 가능
-    fi
-}
+# Allora-chain 클론 및 설치
+echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}2. Allora-chain 클론 및 설치 중...${RESET}"
+git clone -b $(curl -s https://api.github.com/repos/allora-network/allora-chain/releases/latest | grep tag_name | cut -d '"' -f 4) https://github.com/allora-network/allora-chain.git
+cd allora-chain && make install
 
-# 기본 포트 및 최대 포트 설정
-starting_ports=(8000)
-max_port=65535
+# PATH에 GOPATH/bin 추가
+echo 'export PATH=$PATH:$(go env GOPATH)/bin' >> ~/.bashrc
+source ~/.bashrc
 
-# 포트 확인 및 변경
-for starting_port in "${starting_ports[@]}"; do
-    desired_port=$starting_port
-    while [ $desired_port -le $max_port ]; do
-        if check_port $desired_port; then
-            echo -e "${GREEN}사용 가능한 포트를 찾았습니다: $desired_port${NC}"
-            break 2
-        fi
-        desired_port=$((desired_port + 1))
-    done
-done
-
-# 포트가 사용 중인 경우 처리
-if [ $desired_port -gt $max_port ]; then
-    echo -e "${RED}사용 가능한 포트를 찾을 수 없습니다.${NC}"
-    exit 1
-fi
-
-# config.json 파일 생성
-echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}config.json 파일 생성 중...${RESET}"
-cat <<EOF > config.json
-{
-  "wallet": {
-    "addressKeyName": "test",
-    "addressRestoreMnemonic": "$WALLET_SEED_PHRASE",
-    "alloraHomeDir": "",
-    "gas": "1000000",
-    "gasAdjustment": 1.0,
-    "nodeRpc": "https://sentries-rpc.testnet-1.testnet.allora.network/",
-    "maxRetries": 1,
-    "delay": 1,
-    "submitTx": true
-  },
-  "worker": [
-    {
-      "topicId": 1,
-      "inferenceEntrypointName": "api-worker-reputer",
-      "loopSeconds": 5,
-      "parameters": {
-        "InferenceEndpoint": "http://localhost:${desired_port}/inference/{Token}",
-        "Token": "ETH"
-      }
-    },
-    {
-      "topicId": 1,
-      "inferenceEntrypointName": "api-worker-reputer",
-      "loopSeconds": 5,
-      "parameters": {
-        "InferenceEndpoint": "http://localhost:${desired_port}/inference/{Token}",
-        "Token": "ETH"
-      }
-    }
-  ]
-}
-EOF
-
-echo -e "${BOLD}${DARK_YELLOW}config.json 파일이 성공적으로 생성되었습니다!${RESET}"
-echo
-
-# docker-compose.yml 파일에서 포트 추가
-echo -e "${YELLOW}docker-compose.yml 의 포트를 ${desired_port}로 추가합니다.${NC}"
-sed -i "/ports:/a\ \ \ \ - \"${desired_port}:${desired_port}\"" docker-compose.yml
-
-# UFW에서 포트 개방
-echo -e "${YELLOW}UFW에서 포트 $desired_port를 개방합니다...${NC}"
-ufw allow $desired_port/tcp
-
-# 추가 디렉토리 및 권한 설정
-mkdir worker-data
-chmod +x init.config
-sleep 2
-./init.config
-
-echo
-echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}Docker 컨테이너 빌드 및 시작 중...${RESET}"
+# 로컬 네트워크 초기화 및 시작
+echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}3. 로컬 네트워크 초기화 및 시작 중...${RESET}"
+make init
+allorad start
 
 # Docker 컨테이너 빌드 및 시작
-docker compose build
-docker-compose up -d
-echo
-sleep 2
-echo -e "${BOLD}${DARK_YELLOW}실행 중인 Docker 컨테이너 확인 중...${RESET}"
-docker ps
-echo
-docker logs -f worker
-echo
+echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}4. Docker 컨테이너 빌드 및 시작 중...${RESET}"
+docker compose pull
+docker compose up -d
 
-export USERIP=$(curl -s ifconfig.me)
-curl -s http://USERIP:26657/status | jq .
-curl -s http://USERIP:26657/status | jq .result.sync_info.catching_up
+# 노드 상태 확인
+echo -e "${BOLD}${DARK_YELLOW}5. 노드 상태 확인 중...${RESET}"
+curl -so- http://localhost:26657/status | jq .
+curl -so- http://localhost:26657/status | jq .result.sync_info.catching_up
 
-echo -e "${YELLOW}검증자 정보를 확인합니다.${RESET}"
+# 노드 호출 및 상태 확인 안내
+echo -e "${BOLD}${CYAN}노드 호출 및 상태 확인 방법:${RESET}"
+echo -e "1. 노드 상태 확인: ${GREEN}curl -so- http://localhost:26657/status | jq .${RESET}"
+echo -e "2. 노드 동기화 상태 확인: ${GREEN}curl -so- http://localhost:26657/status | jq .result.sync_info.catching_up${RESET}"
+echo -e "   - 출력이 'false'가 될 때까지 기다리세요. 이는 노드가 완전히 동기화되었음을 의미합니다."
+echo -e "${BOLD}${CYAN}노드가 실행 중일 때 위 명령어를 사용하여 언제든지 상태를 확인할 수 있습니다.${RESET}"
 
-cat data/validator0.account_info
-read -p "검증자 정보를 확인하세요"
-read -p "검증자 지갑주소를 입력하세요:" VALIWALLET
-read -p "밸리데이터 노드 이름을 설정하세요:" NAME
-docker compose exec validator0 bash
+# 검증자 설정 및 스테이킹
+echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}6. 검증자 설정 및 스테이킹 중...${RESET}"
+docker compose exec validator0 bash -c "
+# 스테이크 정보 파일 생성
 cat > stake-validator.json << EOF
 {
-    "pubkey": $(allorad --home=$APP_HOME comet show-validator),
-    "amount": "1000000uallo",
-    "moniker": "$NAME",
-    "commission-rate": "0.1",
-    "commission-max-rate": "0.2",
-    "commission-max-change-rate": "0.01",
-    "min-self-delegation": "1"
+    \"pubkey\": \$(allorad --home=\$APP_HOME comet show-validator),
+    \"amount\": \"1000000uallo\",
+    \"moniker\": \"validator0\",
+    \"commission-rate\": \"0.1\",
+    \"commission-max-rate\": \"0.2\",
+    \"commission-max-change-rate\": \"0.01\",
+    \"min-self-delegation\": \"1\"
 }
 EOF
 
-echo -e "${YELLOW}스테이킹 명령을 실행합니다.${RESET}"
+# 검증자 스테이킹
+echo '검증자 스테이킹 중...'
 allorad tx staking create-validator ./stake-validator.json \
-    --chain-id=allora-testnet-1 \
-    --home="$APP_HOME" \
+    --chain-id=testnet \
+    --home=\"\$APP_HOME\" \
     --keyring-backend=test \
-    --from="$MONIKER"
+    --from=validator0
 
-VAL_PUBKEY=$(allorad --home=$APP_HOME comet show-validator | jq -r .key)
-allorad --home=$APP_HOME q staking validators -o=json | \
-    jq '.validators[] | select(.consensus_pubkey.value=="'$VAL_PUBKEY'")'
-allorad --home=$APP_HOME status | jq -r '.validator_info.voting_power'
+# 검증자 설정 확인
+echo '검증자 설정 확인 중...'
+VAL_PUBKEY=\$(allorad --home=\$APP_HOME comet show-validator | jq -r .key)
+allorad --home=\$APP_HOME q staking validators -o=json | \
+    jq '.validators[] | select(.consensus_pubkey.value==\"'\$VAL_PUBKEY'\")'
 
-echo -e "${YELLOW}모든 작업이 완료되었습니다. 컨트롤+A+D로 스크린을 종료해주세요${RESET}"
-echo -e "${BOLD}${RED}다음 링크에서 지갑에 Faucet을 요청하세요: https://faucet.testnet.allora.network/${RESET}"
-echo -e "${BOLD}${UNDERLINE}${CYAN}스크립트 작성자: https://t.me/kjkresearch${RESET}"
+# 검증자 투표력 확인
+echo '검증자 투표력 확인 중...'
+allorad --home=\$APP_HOME status | jq -r '.validator_info.voting_power'
+"
+
+echo -e "${BOLD}${RED}설치 및 설정이 완료되었습니다.${RESET}"
+echo -e "${BOLD}${CYAN}자세한 사용법은 Allora 문서를 참조하세요.${RESET}"
+echo -e "${BOLD}${CYAN}노드 상태를 주기적으로 확인하는 것을 잊지 마세요!${RESET}"
