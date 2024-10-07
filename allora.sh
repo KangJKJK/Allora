@@ -48,12 +48,18 @@ source ~/.bashrc
 
 # Allorad 버전 확인
 echo -e "${BOLD}${DARK_YELLOW}Allorad 버전 확인 중...${RESET}"
-allorad version
+~/.local/bin/allorad version
 
 # Allora-chain 클론 및 설치
 echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}2. Allora-chain 클론 및 설치 중...${RESET}"
-git clone -b $(curl -s https://api.github.com/repos/allora-network/allora-chain/releases/latest | grep tag_name | cut -d '"' -f 4) https://github.com/allora-network/allora-chain.git
-cd allora-chain && make install
+if [ -d "allora-chain" ]; then
+    cd allora-chain
+    git pull
+else
+    git clone -b $(curl -s https://api.github.com/repos/allora-network/allora-chain/releases/latest | grep tag_name | cut -d '"' -f 4) https://github.com/allora-network/allora-chain.git
+    cd allora-chain
+fi
+make install
 
 # PATH에 GOPATH/bin 추가
 echo 'export PATH=$PATH:$(go env GOPATH)/bin' >> ~/.bashrc
@@ -62,7 +68,7 @@ source ~/.bashrc
 # 로컬 네트워크 초기화 및 시작
 echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}3. 로컬 네트워크 초기화 및 시작 중...${RESET}"
 make init
-allorad start
+~/.local/bin/allorad start
 
 # Docker 컨테이너 빌드 및 시작
 echo -e "${BOLD}${UNDERLINE}${DARK_YELLOW}4. Docker 컨테이너 빌드 및 시작 중...${RESET}"
@@ -87,7 +93,7 @@ docker compose exec validator0 bash -c "
 # 스테이크 정보 파일 생성
 cat > stake-validator.json << EOF
 {
-    \"pubkey\": \$(allorad --home=\$APP_HOME comet show-validator),
+    \"pubkey\": \$(~/.local/bin/allorad --home=\$APP_HOME comet show-validator),
     \"amount\": \"1000000uallo\",
     \"moniker\": \"validator0\",
     \"commission-rate\": \"0.1\",
@@ -99,7 +105,7 @@ EOF
 
 # 검증자 스테이킹
 echo '검증자 스테이킹 중...'
-allorad tx staking create-validator ./stake-validator.json \
+~/.local/bin/allorad tx staking create-validator ./stake-validator.json \
     --chain-id=testnet \
     --home=\"\$APP_HOME\" \
     --keyring-backend=test \
@@ -107,13 +113,13 @@ allorad tx staking create-validator ./stake-validator.json \
 
 # 검증자 설정 확인
 echo '검증자 설정 확인 중...'
-VAL_PUBKEY=\$(allorad --home=\$APP_HOME comet show-validator | jq -r .key)
-allorad --home=\$APP_HOME q staking validators -o=json | \
+VAL_PUBKEY=\$(~/.local/bin/allorad --home=\$APP_HOME comet show-validator | jq -r .key)
+~/.local/bin/allorad --home=\$APP_HOME q staking validators -o=json | \
     jq '.validators[] | select(.consensus_pubkey.value==\"'\$VAL_PUBKEY'\")'
 
 # 검증자 투표력 확인
 echo '검증자 투표력 확인 중...'
-allorad --home=\$APP_HOME status | jq -r '.validator_info.voting_power'
+~/.local/bin/allorad --home=\$APP_HOME status | jq -r '.validator_info.voting_power'
 "
 
 echo -e "${GREEN}Faucet 주소: https://faucet.testnet.allora.network/${NC}"
